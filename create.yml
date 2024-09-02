@@ -1,5 +1,5 @@
 ---
-- name: Install and configure PostgreSQL 16
+- name: Install and configure PostgreSQL
   hosts: postgres_servers
   become: yes
   vars:
@@ -39,7 +39,8 @@
 
     - name: Add PostgreSQL APT repository
       ansible.builtin.command:
-        cmd: 'echo "deb [signed-by=/usr/share/postgresql-common/pgdg/apt.postgresql.org.asc] https://apt.postgresql.org/pub/repos/apt {{ ansible_distribution_release }}-pgdg main" > /etc/apt/sources.list.d/pgdg.list'
+        cmd: >
+          sh -c 'echo "deb [signed-by=/usr/share/postgresql-common/pgdg/apt.postgresql.org.asc] https://apt.postgresql.org/pub/repos/apt {{ ansible_distribution_release }}-pgdg main" > /etc/apt/sources.list.d/pgdg.list'
         creates: /etc/apt/sources.list.d/pgdg.list
 
     - name: Update apt cache again
@@ -48,14 +49,14 @@
 
     - name: Install PostgreSQL
       ansible.builtin.apt:
-        name: "postgresql-{{ postgresql_version }}"
+        name: postgresql
         state: present
 
     - name: Install PostgreSQL client and contrib packages
       ansible.builtin.apt:
         name:
-          - "postgresql-client-{{ postgresql_version }}"
-          - "postgresql-contrib-{{ postgresql_version }}"
+          - postgresql-client
+          - postgresql-contrib
         state: present
 
     - name: Ensure PostgreSQL service is enabled and started
