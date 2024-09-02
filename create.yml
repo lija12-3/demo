@@ -1,6 +1,6 @@
 ---
 - name: Install and configure PostgreSQL 16
-  hosts: your_postgres_host
+  hosts: postgres_servers
   become: yes
   vars:
     postgresql_version: 16
