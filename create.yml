@@ -39,8 +39,7 @@
 
     - name: Add PostgreSQL APT repository
       ansible.builtin.command:
-        cmd: >
-          sh -c 'echo "deb [signed-by=/usr/share/postgresql-common/pgdg/apt.postgresql.org.asc] https://apt.postgresql.org/pub/repos/apt {{ ansible_distribution_release }}-pgdg main" > /etc/apt/sources.list.d/pgdg.list'
+        cmd: 'echo "deb [signed-by=/usr/share/postgresql-common/pgdg/apt.postgresql.org.asc] https://apt.postgresql.org/pub/repos/apt {{ ansible_distribution_release }}-pgdg main" > /etc/apt/sources.list.d/pgdg.list'
         creates: /etc/apt/sources.list.d/pgdg.list
 
     - name: Update apt cache again
@@ -76,7 +75,7 @@
       ansible.builtin.lineinfile:
         path: /etc/postgresql/{{ postgresql_version }}/main/postgresql.conf
         regexp: '^#listen_addresses ='
-        line: 'listen_addresses = '\''*'\'''
+        line: "listen_addresses = '*'"
         validate: 'pg_ctl reload -D /etc/postgresql/{{ postgresql_version }}/main -l /var/log/postgresql/postgresql-{{ postgresql_version }}-main.log'
 
     - name: Restart PostgreSQL service to apply configuration changes
