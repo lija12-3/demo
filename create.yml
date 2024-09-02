@@ -1,0 +1,119 @@
+---
+- name: Install and configure PostgreSQL 16
+  hosts: your_postgres_host
+  become: yes
+  vars:
+    postgresql_version: 16
+    postgres_user: admin
+    postgres_password: admin
+    postgres_db: mydatabase
+
+  tasks:
+    - name: Update apt cache
+      ansible.builtin.apt:
+        update_cache: yes
+
+    - name: Install required system packages
+      ansible.builtin.apt:
+        name:
+          - python3
+          - libpq-dev
+        state: present
+
+    - name: Install psycopg2
+      ansible.builtin.apt:
+        name: python3-psycopg2
+        state: present
+
+    - name: Ensure required directory for PostgreSQL repository key exists
+      ansible.builtin.file:
+        path: /usr/share/postgresql-common/pgdg
+        state: directory
+        mode: '0755'
+
+    - name: Download the PostgreSQL repository key
+      ansible.builtin.get_url:
+        url: https://www.postgresql.org/media/keys/ACCC4CF8.asc
+        dest: /usr/share/postgresql-common/pgdg/apt.postgresql.org.asc
+        mode: '0644'
+
+    - name: Add PostgreSQL APT repository
+      ansible.builtin.command:
+        cmd: >
+          sh -c 'echo "deb [signed-by=/usr/share/postgresql-common/pgdg/apt.postgresql.org.asc] https://apt.postgresql.org/pub/repos/apt {{ ansible_distribution_release }}-pgdg main" > /etc/apt/sources.list.d/pgdg.list'
+        creates: /etc/apt/sources.list.d/pgdg.list
+
+    - name: Update apt cache again
+      ansible.builtin.apt:
+        update_cache: yes
+
+    - name: Install PostgreSQL
+      ansible.builtin.apt:
+        name: "postgresql-{{ postgresql_version }}"
+        state: present
+
+    - name: Install PostgreSQL client and contrib packages
+      ansible.builtin.apt:
+        name:
+          - "postgresql-client-{{ postgresql_version }}"
+          - "postgresql-contrib-{{ postgresql_version }}"
+        state: present
+
+    - name: Ensure PostgreSQL service is enabled and started
+      ansible.builtin.service:
+        name: postgresql
+        state: started
+        enabled: yes
+
+    - name: Configure pg_hba.conf for password authentication
+      ansible.builtin.lineinfile:
+        path: /etc/postgresql/{{ postgresql_version }}/main/pg_hba.conf
+        regexp: '^host\s+all\s+all\s+127.0.0.1/32\s+'
+        line: 'host    all             all             127.0.0.1/32            md5'
+        validate: 'pg_ctl reload -D /etc/postgresql/{{ postgresql_version }}/main -l /var/log/postgresql/postgresql-{{ postgresql_version }}-main.log'
+
+    - name: Configure postgresql.conf to listen on all addresses
+      ansible.builtin.lineinfile:
+        path: /etc/postgresql/{{ postgresql_version }}/main/postgresql.conf
+        regexp: '^#listen_addresses ='
+        line: 'listen_addresses = '\''*'\'''
+        validate: 'pg_ctl reload -D /etc/postgresql/{{ postgresql_version }}/main -l /var/log/postgresql/postgresql-{{ postgresql_version }}-main.log'
+
+    - name: Restart PostgreSQL service to apply configuration changes
+      ansible.builtin.service:
+        name: postgresql
+        state: restarted
+
+    - name: Create PostgreSQL user
+      ansible.builtin.postgresql_user:
+        name: "{{ postgres_user }}"
+        password: "{{ postgres_password }}"
+        state: present
+
+    - name: Create PostgreSQL database
+      ansible.builtin.postgresql_db:
+        name: "{{ postgres_db }}"
+        owner: "{{ postgres_user }}"
+        state: present
+
+    - name: Grant privileges on database
+      ansible.builtin.postgresql_privs:
+        db: "{{ postgres_db }}"
+        role: "{{ postgres_user }}"
+        privs: "ALL"
+        type: "database"
+        state: present
+
+    - name: Ensure PostgreSQL listens on port 5432
+      ansible.builtin.lineinfile:
+        path: /etc/postgresql/{{ postgresql_version }}/main/postgresql.conf
+        regexp: '^#port = 5432'
+        line: 'port = 5432'
+        validate: 'pg_ctl reload -D /etc/postgresql/{{ postgresql_version }}/main -l /var/log/postgresql/postgresql-{{ postgresql_version }}-main.log'
+
+    - name: Ensure proper socket connection
+      ansible.builtin.command:
+        cmd: "netstat -tulnp | grep 5432"
+      register: socket_check
+      failed_when: "'5432' not in socket_check.stdout"
+      changed_when: false
