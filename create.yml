@@ -111,9 +111,8 @@
         line: 'port = 5432'
         validate: 'pg_ctl reload -D /etc/postgresql/{{ postgresql_version }}/main -l /var/log/postgresql/postgresql-{{ postgresql_version }}-main.log'
 
-    - name: Ensure proper socket connection
-      ansible.builtin.command:
-        cmd: "netstat -tulnp | grep 5432"
-      register: socket_check
-      failed_when: "'5432' not in socket_check.stdout"
-      changed_when: false
+    - name: Wait for PostgreSQL to listen on port 5432
+      ansible.builtin.wait_for:
+        port: 5432
+        delay: 10
+        timeout: 300
