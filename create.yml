@@ -70,14 +70,14 @@
         path: /etc/postgresql/{{ postgresql_version }}/main/pg_hba.conf
         regexp: '^host\s+all\s+all\s+127.0.0.1/32\s+'
         line: 'host    all             all             127.0.0.1/32            md5'
-        validate: 'pg_ctl reload -D /etc/postgresql/{{ postgresql_version }}/main -l /var/log/postgresql/postgresql-{{ postgresql_version }}-main.log'
+        validate: '/usr/bin/pg_ctl reload -D /etc/postgresql/{{ postgresql_version }}/main -l /var/log/postgresql/postgresql-{{ postgresql_version }}-main.log'
 
     - name: Configure postgresql.conf to listen on all addresses
       ansible.builtin.lineinfile:
         path: /etc/postgresql/{{ postgresql_version }}/main/postgresql.conf
         regexp: '^#listen_addresses ='
         line: "listen_addresses = '*'"
-        validate: 'pg_ctl reload -D /etc/postgresql/{{ postgresql_version }}/main -l /var/log/postgresql/postgresql-{{ postgresql_version }}-main.log'
+        validate: '/usr/bin/pg_ctl reload -D /etc/postgresql/{{ postgresql_version }}/main -l /var/log/postgresql/postgresql-{{ postgresql_version }}-main.log'
 
     - name: Restart PostgreSQL service to apply configuration changes
       ansible.builtin.service:
@@ -109,7 +109,7 @@
         path: /etc/postgresql/{{ postgresql_version }}/main/postgresql.conf
         regexp: '^#port = 5432'
         line: 'port = 5432'
-        validate: 'pg_ctl reload -D /etc/postgresql/{{ postgresql_version }}/main -l /var/log/postgresql/postgresql-{{ postgresql_version }}-main.log'
+        validate: '/usr/bin/pg_ctl reload -D /etc/postgresql/{{ postgresql_version }}/main -l /var/log/postgresql/postgresql-{{ postgresql_version }}-main.log'
 
     - name: Wait for PostgreSQL to listen on port 5432
       ansible.builtin.wait_for:
