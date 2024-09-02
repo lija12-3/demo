@@ -66,47 +66,48 @@
         enabled: yes
 
     - name: Configure pg_hba.conf for trust authentication during setup
-      become_user: postgres
+      become: yes
       ansible.builtin.lineinfile:
         path: /etc/postgresql/{{ postgresql_version }}/main/pg_hba.conf
         regexp: '^host\s+all\s+all\s+127.0.0.1/32\s+'
         line: 'host    all             all             127.0.0.1/32            trust'
 
     - name: Configure postgresql.conf to listen on all addresses
-      become_user: postgres
+      become: yes
       ansible.builtin.lineinfile:
         path: /etc/postgresql/{{ postgresql_version }}/main/postgresql.conf
         regexp: '^#listen_addresses ='
         line: "listen_addresses = '*'"
 
     - name: Ensure PostgreSQL listens on port 5432
-      become_user: postgres
+      become: yes
       ansible.builtin.lineinfile:
         path: /etc/postgresql/{{ postgresql_version }}/main/postgresql.conf
         regexp: '^#port = 5432'
         line: 'port = 5432'
 
     - name: Restart PostgreSQL service to apply configuration changes
+      become: yes
       ansible.builtin.service:
         name: postgresql
         state: restarted
 
     - name: Create PostgreSQL user
-      become_user: postgres
+      become: yes
       ansible.builtin.postgresql_user:
         name: "{{ postgres_user }}"
         password: "{{ postgres_password }}"
         state: present
 
     - name: Create PostgreSQL database
-      become_user: postgres
+      become: yes
       ansible.builtin.postgresql_db:
         name: "{{ postgres_db }}"
         owner: "{{ postgres_user }}"
         state: present
 
     - name: Grant privileges on database
-      become_user: postgres
+      become: yes
       ansible.builtin.postgresql_privs:
         db: "{{ postgres_db }}"
         role: "{{ postgres_user }}"
@@ -121,7 +122,7 @@
         timeout: 300
 
     - name: Revert pg_hba.conf to md5 authentication
-      become_user: postgres
+      become: yes
       ansible.builtin.lineinfile:
         path: /etc/postgresql/{{ postgresql_version }}/main/pg_hba.conf
         regexp: '^host\s+all\s+all\s+127.0.0.1/32\s+'
