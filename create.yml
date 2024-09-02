@@ -70,14 +70,12 @@
         path: /etc/postgresql/{{ postgresql_version }}/main/pg_hba.conf
         regexp: '^host\s+all\s+all\s+127.0.0.1/32\s+'
         line: 'host    all             all             127.0.0.1/32            trust'
-        validate: '/usr/lib/postgresql/{{ postgresql_version }}/bin/pg_ctl reload -D /etc/postgresql/{{ postgresql_version }}/main -l /var/log/postgresql/postgresql-{{ postgresql_version }}-main.log'
 
     - name: Ensure PostgreSQL listens on port 5432
       ansible.builtin.lineinfile:
         path: /etc/postgresql/{{ postgresql_version }}/main/postgresql.conf
         regexp: '^#port = 5432'
         line: 'port = 5432'
-        validate: '/usr/lib/postgresql/{{ postgresql_version }}/bin/pg_ctl reload -D /etc/postgresql/{{ postgresql_version }}/main -l /var/log/postgresql/postgresql-{{ postgresql_version }}-main.log'
 
     - name: Restart PostgreSQL service to apply configuration changes
       ansible.builtin.service:
@@ -121,4 +119,3 @@
         path: /etc/postgresql/{{ postgresql_version }}/main/pg_hba.conf
         regexp: '^host\s+all\s+all\s+127.0.0.1/32\s+'
         line: 'host    all             all             127.0.0.1/32            md5'
-        validate: '/usr/lib/postgresql/{{ postgresql_version }}/bin/pg_ctl reload -D /etc/postgresql/{{ postgresql_version }}/main -l /var/log/postgresql/postgresql-{{ postgresql_version }}-main.log'
